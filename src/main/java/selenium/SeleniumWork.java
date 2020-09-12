@@ -67,9 +67,9 @@ public class SeleniumWork {
         /**
          * Зацикливаем проверку:
          */
-        //while(true) {
+        while(true) {
 
-            //Thread.sleep(1000);
+            Thread.sleep(1000);
 
             // Обновляем страничку:
             refresh();
@@ -87,10 +87,10 @@ public class SeleniumWork {
                     updateNew(actual);
                 }
             }
-        //}
+        }
 
         // Остаемся на той-же вкладке:
-        updateNew(allElementOrder.get(0));
+        //updateNew(allElementOrder.get(0));
     }
 
     /**
