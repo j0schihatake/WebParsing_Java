@@ -4,11 +4,14 @@ import com.google.common.io.Files;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.chrome.ChromeOptions;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,16 +27,19 @@ public class SeleniumWork {
 
     public static String findClassName = "erw2ohd2";
 
-    public static String saveScreenDirectory = "D:\\";
+    public static String saveScreenDirectory = "E:\\Projects\\Reports";
 
-    public static String baseUrl = "https://auto.drom.ru/all/page3/?tcb=1599890514";
+    public static String baseUrl = "https://auto.drom.ru/region55/all/page3/?tcb=1599890514&maxprice=500000&unsold=1";
 
-    public static String PATH_TO_CHROMEDRIVER_EXE = "D:\\Develop\\Java\\Projects\\WebParser_Java\\src\\main\\resources\\chromedriver35.exe";
+    public static String PATH_TO_CHROMEDRIVER_EXE = "E:\\Projects\\WebParsing_Java\\src\\main\\resources\\chromedriver35.exe";
 
     // Список всех обьявлений на момент старта:
     public static HashMap<String, Order> allOrder = new HashMap<String, Order>();
 
     public SeleniumWork() throws IOException {
+
+        ChromeOptions options = new ChromeOptions();
+
         service = new ChromeDriverService.Builder()
                 .usingDriverExecutable(new File(PATH_TO_CHROMEDRIVER_EXE))
                 .usingAnyFreePort()
@@ -50,8 +56,26 @@ public class SeleniumWork {
         List<WebElement> allElementOrder = findAllOrder();
 
         for (int i = 0; i < allElementOrder.size(); i++ ){
-            addNewOrder(allElementOrder.get(i));
+            WebElement nextElement = allElementOrder.get(i);
+            String nextKey = generateOrderInfo(nextElement.getText());
+            addNewOrder(nextElement, nextKey);
         }
+    }
+
+    public void autentificate(){
+        goTo("https://my.drom.ru/sign");
+
+        String login = "89502108777";
+        String password = "33n8p8ez";
+
+        WebElement loginField = driver.findElement(By.name("sign"));
+        WebElement passwordField = driver.findElement(By.name("password"));
+
+        loginField.sendKeys(login);
+        passwordField.sendKeys(password);
+
+        WebElement signButton = driver.findElement(By.id("signbutton"));
+        signButton.click();
     }
 
     /**
@@ -62,6 +86,10 @@ public class SeleniumWork {
         goTo(baseUrl);
         driver.manage().window().maximize();
 
+        autentificate();
+
+        goTo(baseUrl);
+
         initializePage();
 
         /**
@@ -69,7 +97,7 @@ public class SeleniumWork {
          */
         while(true) {
 
-            Thread.sleep(1000);
+            Thread.sleep(3000);
 
             // Обновляем страничку:
             refresh();
@@ -77,7 +105,9 @@ public class SeleniumWork {
             List<WebElement> allElementOrder = findAllOrder();
 
             for (int i = 0; i < allElementOrder.size(); i++) {
-                WebElement actual = isNewOrder(allElementOrder.get(i));
+                WebElement nextElement = allElementOrder.get(i);
+                String nextKey = generateOrderInfo(nextElement.getText());
+                WebElement actual = isNewOrder(nextElement, nextKey);
                 if (actual != null) {
                     /**
                      * Тут переходим по ссылке в новую вкладку,
@@ -85,6 +115,7 @@ public class SeleniumWork {
                      * Делаем скрин(теперь просто в файл сохраняем).
                      */
                     updateNew(actual);
+                    addNewOrder(actual, nextKey);
                 }
             }
         }
@@ -98,10 +129,11 @@ public class SeleniumWork {
      */
     public void updateNew(WebElement element) throws Exception {
 
+        String phoneNumber = "";
+
         goTo(element.getAttribute("href"));
 
         // Нажимаем кнопку показать номер телефона:
-        //class="b-button b-button_theme_blue b-button_width_available"
         List<WebElement> targets = driver.findElements(By.tagName("button"));
         for(int i = 0; i < targets.size(); i++){
             WebElement button = targets.get(i);
@@ -111,28 +143,18 @@ public class SeleniumWork {
             }
         }
 
-        // Запоминаем обьявление так как мы его обработали:
-        addNewOrder(element);
+        Thread.sleep(3000);
+        List<WebElement> targets3 = driver.findElements(By.tagName("span"));
+        for(int i = 0; i < targets3.size(); i++){
+            WebElement elem = targets3.get(i);
+            System.out.println(elem.getText());
+            if(elem.getText().contains("+7")){
+                phoneNumber = elem.getText();
+            }
+        }
+        System.out.println("Номер телефона = " + phoneNumber);
 
-        // Размер странички который будем прокручивать вниз и скринить(в числе поворотов ролика мышки):
-        //int pageSize = 50;
-
-        saveAsPage(element);
-
-        /**
-         * Перешли на страничку, надо скрин сделать(я вот боюсь что ширина рекламы может сожрать часть данных)
-         */
-        //for (int i = 0; i < pageSize; i += 10){
-
-            //String saveDirectory = saveScreenDirectory + generateOrderInfo(element.getText()) + ".jpg";
-
-            //saveImageAs(createScreenImage(), saveDirectory);
-
-            //Robot robot = new Robot();
-
-            // Покрутить колесико мышки:
-            //robot.mouseWheel(10);
-        //}
+        saveAsPage(element, phoneNumber);
 
         goTo(baseUrl);
     }
@@ -142,23 +164,21 @@ public class SeleniumWork {
      * @param element
      * @throws IOException
      */
-    public void saveAsPage(WebElement element) throws IOException {
+    public void saveAsPage(WebElement element, String phoneNumber) throws IOException {
 
         String stored_report = driver.getPageSource();
-        byte[] allBytes = driver.getPageSource().getBytes("UTF-8");
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd HH_mm_ss");
         LocalDateTime now = LocalDateTime.now();
         System.out.println(dtf.format(now));
 
-        String fullPath = saveScreenDirectory + dtf.format(now) + "report" + ".html";
+        String fullPath = saveScreenDirectory + dtf.format(now) + phoneNumber + "report" + ".html";
 
         File f = new File(fullPath);
-        Files.write(allBytes, f);
-        //FileWriter writer = new FileWriter(f,true);
-        //writer.write(stored_report);
+        FileWriter writer = new FileWriter(f,true);
+        writer.write(stored_report);
         System.out.println("Report Created is in Location : " + f.getAbsolutePath());
-        //writer.close();
+        writer.close();
     }
 
     /**
@@ -170,12 +190,7 @@ public class SeleniumWork {
         // запрашиваем определенные элементы надо в хроме глянуть что ищем: например у всех ссылок одинаковый класс class=... class="css-1dyr1oa erw2ohd2"
         List<WebElement> element = driver.findElements(By.className(findClassName));
 
-        // теперь в element коллекции у нас по идее все ссылки на обьявления:
-        // попробую их попотрашить на содержимое:
-        //WebElement element1 = element.get(0);
-
         //System.out.println("Число найденых элементов: " + element.size());
-
         return element;
     }
 
@@ -199,9 +214,6 @@ public class SeleniumWork {
 
         result = splited[0] + splited[1];
 
-        //System.out.print(splited[0]);
-        //System.out.println(splited[1]);
-
         return result;
     }
 
@@ -210,13 +222,9 @@ public class SeleniumWork {
      * @param element
      * @return
      */
-    public WebElement isNewOrder(WebElement element){
+    public WebElement isNewOrder(WebElement element, String key){
         WebElement result = null;
-
-        String nextKey = "";
-        nextKey = generateOrderInfo(element.getText());
-
-        return !allOrder.containsKey(nextKey) ? element : null;
+        return !allOrder.containsKey(key) ? element : null;
     }
 
     /**
@@ -245,10 +253,10 @@ public class SeleniumWork {
      * Добавляем обьявление в обработанные:
      * @param element
      */
-    public void addNewOrder(WebElement element){
+    public void addNewOrder(WebElement element, String key){
         Order order = new Order(element.getText());
-        if(!allOrder.containsKey(generateOrderInfo(element.getText()))){
-            allOrder.put(generateOrderInfo(element.getText()),order);
+        if(!allOrder.containsKey(key)){
+            allOrder.put(key,order);
         }
     }
 
