@@ -23,7 +23,7 @@ public class Main {
 
         // Выводить ли трасерные сообщения о том что делается: (false = отключено, true = включено)
         SeleniumWork.isDebug = false;
-        
+
         SeleniumWork work = new SeleniumWork();
         work.checkNewOrder();
 
