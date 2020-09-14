@@ -25,6 +25,8 @@ public class SeleniumWork {
 
     public static ArrayList<String> tabs = new ArrayList<String>();
 
+    public static boolean isDebug = false;
+
     public static String login = "";
 
     public static String password = "";
@@ -78,27 +80,34 @@ public class SeleniumWork {
         try {
             WebElement loginField = driver.findElement(By.name("sign"));
             loginField.sendKeys(login);
-            System.out.println("autentificate: Элемент loginField успешно найден.");
+            if(isDebug)
+                System.out.println("autentificate: Элемент loginField успешно найден.");
         }catch (org.openqa.selenium.StaleElementReferenceException ex){
-            System.out.println("autentificate: не удалось найти элемент loginField. Описание ошибки: " + ex.getStackTrace());
+            if(isDebug)
+                System.out.println("autentificate: не удалось найти элемент loginField. Описание ошибки: " + ex.getStackTrace());
         }
         try {
             WebElement passwordField = driver.findElement(By.name("password"));
             passwordField.sendKeys(password);
-            System.out.println("autentificate: Элемент passwordField успешно найден.");
+            if(isDebug)
+                System.out.println("autentificate: Элемент passwordField успешно найден.");
         }catch (org.openqa.selenium.StaleElementReferenceException ex) {
-            System.out.println("autentificate: Элемент passwordField не найден. Описание ошибки: " + ex.getStackTrace());
+            if(isDebug)
+                System.out.println("autentificate: Элемент passwordField не найден. Описание ошибки: " + ex.getStackTrace());
         }
 
         try{
             WebElement signButton = driver.findElement(By.id("signbutton"));
             signButton.click();
-            System.out.println("autentificate: успешно найдена кнопка прохождения авторизации.");
+            if(isDebug)
+                System.out.println("autentificate: успешно найдена кнопка прохождения авторизации.");
         }catch (org.openqa.selenium.StaleElementReferenceException ex) {
-            System.out.println("autentificate: не удалось найти кнопку прохождения авторизации.");
+            if(isDebug)
+                System.out.println("autentificate: не удалось найти кнопку прохождения авторизации.");
         }
 
-        System.out.println("autentificate: Аутентификация прошла успешно.");
+        if(isDebug)
+            System.out.println("autentificate: Аутентификация прошла успешно.");
     }
 
     /**
@@ -124,7 +133,8 @@ public class SeleniumWork {
 
             Thread.sleep(3000);
 
-            System.out.println("chekNewOrder: начал новый цикл.");
+            if(isDebug)
+                System.out.println("chekNewOrder: начал новый цикл.");
 
             List<WebElement> allElementOrder = findAllOrder();
 
@@ -177,7 +187,8 @@ public class SeleniumWork {
                 }
             }
         }catch (org.openqa.selenium.StaleElementReferenceException ex) {
-            System.out.println("Не удалось найти кнопку показать номер телефона: Описание ошибки " + ex.getStackTrace());
+            if(isDebug)
+                System.out.println("Не удалось найти кнопку показать номер телефона: Описание ошибки " + ex.getStackTrace());
         }
 
         // Пауза перед загрузкой номера на странице:
@@ -191,9 +202,11 @@ public class SeleniumWork {
                     phoneNumber = elem.getText();
                 }
             }
-            System.out.println("UpdateNew: Номер телефона = " + phoneNumber);
+            if(isDebug)
+                System.out.println("UpdateNew: Номер телефона = " + phoneNumber);
         }catch (org.openqa.selenium.StaleElementReferenceException ex) {
-            System.out.println("UpdateNew: не удалось найти элемент номер телефона на странице, описание ошибки: " + ex.getStackTrace());
+            if(isDebug)
+                System.out.println("UpdateNew: не удалось найти элемент номер телефона на странице, описание ошибки: " + ex.getStackTrace());
         }
 
         saveAsPage(phoneNumber);
@@ -210,19 +223,22 @@ public class SeleniumWork {
         try{
             stored_report = driver.getPageSource();
         }catch (org.openqa.selenium.StaleElementReferenceException ex) {
-            System.out.println("saveAsPage: не удалось получить тело html страницы, описание ошибки: " + ex);
+            if(isDebug)
+                System.out.println("saveAsPage: не удалось получить тело html страницы, описание ошибки: " + ex);
         }
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd HH_mm_ss");
         LocalDateTime now = LocalDateTime.now();
-        System.out.println(dtf.format(now));
+        if(isDebug)
+            System.out.println(dtf.format(now));
 
         String fullPath = saveScreenDirectory + dtf.format(now) + phoneNumber + "report" + ".html";
 
         File f = new File(fullPath);
         FileWriter writer = new FileWriter(f,true);
         writer.write(stored_report);
-        System.out.println("saveAsPage: Report Created is in Location : " + f.getAbsolutePath());
+        if(isDebug)
+            System.out.println("saveAsPage: Report Created is in Location : " + f.getAbsolutePath());
         writer.close();
     }
 
@@ -231,14 +247,17 @@ public class SeleniumWork {
      * @return
      */
     public List<WebElement> findAllOrder(){
-        System.out.println("findAllOrder: выполнение поиска всех обновлений.");
+        if(isDebug)
+            System.out.println("findAllOrder: выполнение поиска всех обновлений.");
         List<WebElement> element = null;
         goTo(baseUrl);
         try{
             element = driver.findElements(By.className(findClassName));
-            System.out.println("findAllOrder: Число найденых элементов: " + element.size());
+            if(isDebug)
+                System.out.println("findAllOrder: Число найденых элементов: " + element.size());
         }catch (org.openqa.selenium.StaleElementReferenceException ex){
-            System.out.println("Не удалось найти элемент обьявления. Описание ошибки: " + ex);
+            if(isDebug)
+                System.out.println("Не удалось найти элемент обьявления. Описание ошибки: " + ex);
         }
         return element;
     }
@@ -263,7 +282,8 @@ public class SeleniumWork {
 
         result = splited[0] + splited[1];
 
-        System.out.println("generateOrderInfo: генерация ключа изинформации выполнена, result = " + result + ".");
+        if(isDebug)
+            System.out.println("generateOrderInfo: генерация ключа изинформации выполнена, result = " + result + ".");
 
         return result;
     }
@@ -274,7 +294,8 @@ public class SeleniumWork {
      * @return
      */
     public WebElement isNewOrder(WebElement element, String key){
-        System.out.println("isNewOrder: Проверка новвое ли обьявление: key = " + key + ", !allOrder.containsKey(key) = " + !allOrder.containsKey(key) + ".");
+        if(isDebug)
+            System.out.println("isNewOrder: Проверка новвое ли обьявление: key = " + key + ", !allOrder.containsKey(key) = " + !allOrder.containsKey(key) + ".");
         return !allOrder.containsKey(key) ? element : null;
     }
 
@@ -282,7 +303,8 @@ public class SeleniumWork {
      * Метод обновляет страницу:
      */
     public void refresh(){
-        System.out.println("refresh: обновление страницы.");
+        if(isDebug)
+            System.out.println("refresh: обновление страницы.");
         driver.navigate().refresh();
     }
 
@@ -292,7 +314,8 @@ public class SeleniumWork {
      */
     public void goTo(String url){
         driver.get(url);
-        System.out.println("goTo: Переход на указанный url выполнен.");
+        if(isDebug)
+            System.out.println("goTo: Переход на указанный url выполнен.");
     }
 
     /**
@@ -308,10 +331,12 @@ public class SeleniumWork {
     public void addNewOrder(String key){
         Order order = new Order(key);
         if(!allOrder.containsKey(key)){
-            System.out.println("addNewOrder: Добавление нового обьявления в HashMap. key = " + key);
             allOrder.put(key,order);
+            if(isDebug)
+                System.out.println("addNewOrder: Добавление нового обьявления в HashMap. key = " + key);
         }
-        System.out.println("addNewOrder: allOrder.toString = " + allOrder.toString());
+        if(isDebug)
+            System.out.println("addNewOrder: allOrder.toString = " + allOrder.toString());
     }
 
     /**

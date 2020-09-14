@@ -21,6 +21,9 @@ public class Main {
         // URL на страничку где заканчиваются закрепленные обьявления(желательно с фильтрами):
         SeleniumWork.baseUrl = "https://auto.drom.ru/region55/all/page2/?tcb=1599890514&maxprice=500000&unsold=1";
 
+        // Выводить ли трасерные сообщения о том что делается: (false = отключено, true = включено)
+        SeleniumWork.isDebug = false;
+        
         SeleniumWork work = new SeleniumWork();
         work.checkNewOrder();
 
