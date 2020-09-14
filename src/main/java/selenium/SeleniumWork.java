@@ -100,9 +100,6 @@ public class SeleniumWork {
                 WebElement actual = null;
                 actual = isNewOrder(nextElement, nextKey);
                 if (actual != null) {
-                    actual = nextElement;
-                    nextKey = nextKey;
-
                     // Получаем номер телефона:
                     String phoneNumber = updateNew(actual);
 
