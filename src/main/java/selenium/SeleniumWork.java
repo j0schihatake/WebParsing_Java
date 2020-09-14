@@ -44,6 +44,8 @@ public class SeleniumWork {
 
     public static String saveScreenDirectory = "D:\\";
 
+    public static String fullPathToSound = "D:\\Develop\\Java\\Projects\\WebParser_Java\\src\\main\\resources\\Warbeat.wav";
+
     public static String baseUrl = "https://auto.drom.ru/region55/all/page2/?tcb=1599890514&maxprice=500000&unsold=1";
 
     public static String PATH_TO_CHROMEDRIVER_EXE = "D:\\Develop\\Java\\Projects\\WebParser_Java\\src\\main\\resources\\chromedriver35.exe";
@@ -403,7 +405,7 @@ public class SeleniumWork {
     }
 
     public void playSound() throws IOException, LineUnavailableException, UnsupportedAudioFileException {
-        File soundFile = new File("Warbeat.wav"); //Звуковой файл
+        File soundFile = new File(fullPathToSound); //Звуковой файл
 
         //Получаем AudioInputStream
         //Вот тут могут полететь IOException и UnsupportedAudioFileException

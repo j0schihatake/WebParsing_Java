@@ -27,7 +27,9 @@ public class Main {
         SeleniumWork.isDebug = false;
 
         // Проигрывать ли звук когда сохранена новая страничка:
+        // Указать путь до файла, формат waf рекомендуется тот что в resources Warbeat.wav
         SeleniumWork.isPlaySound = true;
+        SeleniumWork.fullPathToSound = "D:\\Develop\\Java\\Projects\\WebParser_Java\\src\\main\\resources\\Warbeat.wav";
 
         SeleniumWork work = new SeleniumWork();
         work.checkNewOrder();
