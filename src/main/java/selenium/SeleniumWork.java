@@ -7,6 +7,7 @@ import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import java.awt.*;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -24,6 +25,14 @@ public class SeleniumWork {
     public static WebDriver driver;
 
     public static ArrayList<String> tabs = new ArrayList<String>();
+
+    private static int accountNumber = 0;
+
+    public static ArrayList<String> account = new ArrayList<>();
+
+    public static HashMap<String, String> allUsers = new HashMap<>();
+
+    public static boolean isPlaySound = false;
 
     public static boolean isDebug = false;
 
@@ -56,66 +65,13 @@ public class SeleniumWork {
     }
 
     /**
-     * При первом запуске получаем/запоминаем все обьявления на странице:
-     */
-    public void initializePage(){
-        List<WebElement> allElementOrder = findAllOrder();
-
-        for (int i = 0; i < allElementOrder.size(); i++ ){
-            WebElement nextElement = allElementOrder.get(i);
-            String nextKey = generateOrderInfo(nextElement.getText());
-            addNewOrder(nextKey);
-        }
-    }
-
-    public void autentificate(){
-
-        goTo("https://my.drom.ru/sign");
-
-        //String login = "89502108777";
-        //String login = "89502183545";
-        //String password = "33n8p8ez";
-        //String password = "57xwvfep";
-
-        try {
-            WebElement loginField = driver.findElement(By.name("sign"));
-            loginField.sendKeys(login);
-            if(isDebug)
-                System.out.println("autentificate: Элемент loginField успешно найден.");
-        }catch (org.openqa.selenium.StaleElementReferenceException ex){
-            if(isDebug)
-                System.out.println("autentificate: не удалось найти элемент loginField. Описание ошибки: " + ex.getStackTrace());
-        }
-        try {
-            WebElement passwordField = driver.findElement(By.name("password"));
-            passwordField.sendKeys(password);
-            if(isDebug)
-                System.out.println("autentificate: Элемент passwordField успешно найден.");
-        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
-            if(isDebug)
-                System.out.println("autentificate: Элемент passwordField не найден. Описание ошибки: " + ex.getStackTrace());
-        }
-
-        try{
-            WebElement signButton = driver.findElement(By.id("signbutton"));
-            signButton.click();
-            if(isDebug)
-                System.out.println("autentificate: успешно найдена кнопка прохождения авторизации.");
-        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
-            if(isDebug)
-                System.out.println("autentificate: не удалось найти кнопку прохождения авторизации.");
-        }
-
-        if(isDebug)
-            System.out.println("autentificate: Аутентификация прошла успешно.");
-    }
-
-    /**
      * Метод выполняет проверку не появились ли новые обьявления:
      */
     public void checkNewOrder() throws Exception {
 
         driver.manage().window().maximize();
+
+        getNextUser(0);
 
         autentificate();
 
@@ -143,29 +99,140 @@ public class SeleniumWork {
                 String nextKey = generateOrderInfo(nextElement.getText());
                 WebElement actual = null;
                 actual = isNewOrder(nextElement, nextKey);
-                //|| i == 4
                 if (actual != null) {
                     actual = nextElement;
                     nextKey = nextKey;
 
-                    addNewOrder(nextKey);
+                    // Получаем номер телефона:
+                    String phoneNumber = updateNew(actual);
 
-                    updateNew(actual);
-
+                    // Если номер телефона пустой меняем учетную запись.
+                    if(!phoneNumber.equals("")) {
+                        addNewOrder(nextKey);
+                        saveAsPage(phoneNumber);
+                        if(isPlaySound)
+                            playSound();
+                    }else{
+                        changeAccount();
+                    }
                     goTo(baseUrl);
                     break;
                 }
             }
         }
+    }
 
-        // Остаемся на той-же вкладке:
-        //updateNew(allElementOrder.get(0));
+    /**
+     * При первом запуске получаем/запоминаем все обьявления на странице:
+     */
+    public void initializePage(){
+        List<WebElement> allElementOrder = findAllOrder();
+
+        for (int i = 0; i < allElementOrder.size(); i++ ){
+            WebElement nextElement = allElementOrder.get(i);
+            String nextKey = generateOrderInfo(nextElement.getText());
+            addNewOrder(nextKey);
+        }
+    }
+
+    /**
+     * Метод выполняет авторизацию на сайте:
+     */
+    public boolean autentificate() throws InterruptedException {
+
+        boolean result = false;
+
+        goTo("https://my.drom.ru/sign");
+
+        try {
+            WebElement loginField = driver.findElement(By.name("sign"));
+            loginField.clear();
+            loginField.sendKeys(login);
+            if(isDebug)
+                System.out.println("autentificate: Элемент loginField успешно найден.");
+        }catch (org.openqa.selenium.StaleElementReferenceException ex){
+            if(isDebug)
+                System.out.println("autentificate: не удалось найти элемент loginField. Описание ошибки: " + ex.getStackTrace());
+        }
+        try {
+            WebElement passwordField = driver.findElement(By.name("password"));
+            passwordField.clear();
+            passwordField.sendKeys(password);
+            if(isDebug)
+                System.out.println("autentificate: Элемент passwordField успешно найден.");
+        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
+            if(isDebug)
+                System.out.println("autentificate: Элемент passwordField не найден. Описание ошибки: " + ex.getStackTrace());
+        }
+
+        try{
+            WebElement signButton = driver.findElement(By.id("signbutton"));
+            signButton.click();
+            if(isDebug)
+                System.out.println("autentificate: успешно найдена кнопка прохождения авторизации.");
+        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
+            if(isDebug)
+                System.out.println("autentificate: не удалось найти кнопку прохождения авторизации.");
+        }
+
+        Thread.sleep(300);
+        result = driver.getCurrentUrl().equals("https://my.drom.ru/sign");
+
+        if(isDebug)
+            System.out.println("autentificate: Аутентификация прошла: " + result);
+
+        return result;
+    }
+
+    /**
+     * Метод выполняет выход из рабочей учетки:
+     */
+    public void logout() throws InterruptedException {
+        goTo("https://my.drom.ru/logout");
+        Thread.sleep(100);
+    }
+
+    /**
+     * Смена аккаунта на следующий:
+     * @throws InterruptedException
+     */
+    public void changeAccount() throws InterruptedException {
+        logout();
+        int nextNumber = (accountNumber + 1)
+                >= (account.size())
+                ? 0 : accountNumber + 1;
+        getNextUser(nextNumber);
+
+        if(isDebug)
+            System.out.println("changeAccount смена аккаунта на: login = " + login + ", password = " + password);
+
+        autentificate();
+    }
+
+    /**
+     * Метод возвращает пользователя по его номеру в списке(порядок добавления в Main)
+     * @param number
+     */
+    public void getNextUser(int number){
+        login = account.get(number);
+        password = allUsers.get(login);
+        accountNumber = number;
+    }
+
+    /**
+     * Метод добавляет связку логина и пороля нового юзера.
+     * @param login
+     * @param password
+     */
+    public static void addUser(String login, String password){
+        account.add(login);
+        allUsers.put(login,password);
     }
 
     /**
      * Обработка новых обьявлений:
      */
-    public void updateNew(WebElement element) throws Exception {
+    public String updateNew(WebElement element) throws Exception {
 
         String phoneNumber = "";
 
@@ -208,8 +275,7 @@ public class SeleniumWork {
             if(isDebug)
                 System.out.println("UpdateNew: не удалось найти элемент номер телефона на странице, описание ошибки: " + ex.getStackTrace());
         }
-
-        saveAsPage(phoneNumber);
+        return phoneNumber;
     }
 
     /**
@@ -339,12 +405,30 @@ public class SeleniumWork {
             System.out.println("addNewOrder: allOrder.toString = " + allOrder.toString());
     }
 
+    public void playSound() throws IOException, LineUnavailableException, UnsupportedAudioFileException {
+        File soundFile = new File("Warbeat.wav"); //Звуковой файл
+
+        //Получаем AudioInputStream
+        //Вот тут могут полететь IOException и UnsupportedAudioFileException
+        AudioInputStream ais = AudioSystem.getAudioInputStream(soundFile);
+
+        //Получаем реализацию интерфейса Clip
+        //Может выкинуть LineUnavailableException
+        Clip clip = AudioSystem.getClip();
+
+        //Загружаем наш звуковой поток в Clip
+        //Может выкинуть IOException и LineUnavailableException
+        clip.open(ais);
+
+        clip.setFramePosition(0); //устанавливаем указатель на старт
+        clip.start(); //Поехали!!!
+    }
+
     /**
      * Метод создает скриншот экрана и сохраняет в Image.
      * @throws Exception
      */
-    public static BufferedImage createScreenImage() throws Exception
-    {
+    public static BufferedImage createScreenImage() throws Exception {
         Robot robot = new Robot();
         BufferedImage screenShot = robot.createScreenCapture(new Rectangle(Toolkit.getDefaultToolkit().getScreenSize()));
         return screenShot;

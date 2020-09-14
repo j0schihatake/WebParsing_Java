@@ -5,12 +5,14 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         //----------------------------Настройки:
+        // при добавлении нового аккаунта просто скопипастить строчку ниже
+        // и подставить нужные логин и пороль:
 
-        // Логин для авторизации:
-        SeleniumWork.login = "89502108777";
+        SeleniumWork.addUser("89502108777","33n8p8ez");
 
-        // Пороль для авторизации:
-        SeleniumWork.password = "33n8p8ez";
+        SeleniumWork.addUser("89502183545","57xwvfep");
+
+        //----------------------Другие настройки:
 
         // Деректория куда будут сохраняться html новых страничек:
         SeleniumWork.saveScreenDirectory = "D:\\";
@@ -23,6 +25,9 @@ public class Main {
 
         // Выводить ли трасерные сообщения о том что делается: (false = отключено, true = включено)
         SeleniumWork.isDebug = false;
+
+        // Проигрывать ли звук когда сохранена новая страничка:
+        SeleniumWork.isPlaySound = true;
 
         SeleniumWork work = new SeleniumWork();
         work.checkNewOrder();
