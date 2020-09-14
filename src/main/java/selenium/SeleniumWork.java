@@ -25,13 +25,17 @@ public class SeleniumWork {
 
     public static ArrayList<String> tabs = new ArrayList<String>();
 
+    public static String login = "";
+
+    public static String password = "";
+
     public static String findClassName = "erw2ohd2";
 
-    public static String saveScreenDirectory = "E:\\Projects\\Reports";
+    public static String saveScreenDirectory = "D:\\";
 
-    public static String baseUrl = "https://auto.drom.ru/region55/all/page3/?tcb=1599890514&maxprice=500000&unsold=1";
+    public static String baseUrl = "https://auto.drom.ru/region55/all/page2/?tcb=1599890514&maxprice=500000&unsold=1";
 
-    public static String PATH_TO_CHROMEDRIVER_EXE = "E:\\Projects\\WebParsing_Java\\src\\main\\resources\\chromedriver35.exe";
+    public static String PATH_TO_CHROMEDRIVER_EXE = "D:\\Develop\\Java\\Projects\\WebParser_Java\\src\\main\\resources\\chromedriver35.exe";
 
     // Список всех обьявлений на момент старта:
     public static HashMap<String, Order> allOrder = new HashMap<String, Order>();
@@ -58,24 +62,43 @@ public class SeleniumWork {
         for (int i = 0; i < allElementOrder.size(); i++ ){
             WebElement nextElement = allElementOrder.get(i);
             String nextKey = generateOrderInfo(nextElement.getText());
-            addNewOrder(nextElement, nextKey);
+            addNewOrder(nextKey);
         }
     }
 
     public void autentificate(){
+
         goTo("https://my.drom.ru/sign");
 
-        String login = "89502108777";
-        String password = "33n8p8ez";
+        //String login = "89502108777";
+        //String login = "89502183545";
+        //String password = "33n8p8ez";
+        //String password = "57xwvfep";
 
-        WebElement loginField = driver.findElement(By.name("sign"));
-        WebElement passwordField = driver.findElement(By.name("password"));
+        try {
+            WebElement loginField = driver.findElement(By.name("sign"));
+            loginField.sendKeys(login);
+            System.out.println("autentificate: Элемент loginField успешно найден.");
+        }catch (org.openqa.selenium.StaleElementReferenceException ex){
+            System.out.println("autentificate: не удалось найти элемент loginField. Описание ошибки: " + ex.getStackTrace());
+        }
+        try {
+            WebElement passwordField = driver.findElement(By.name("password"));
+            passwordField.sendKeys(password);
+            System.out.println("autentificate: Элемент passwordField успешно найден.");
+        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
+            System.out.println("autentificate: Элемент passwordField не найден. Описание ошибки: " + ex.getStackTrace());
+        }
 
-        loginField.sendKeys(login);
-        passwordField.sendKeys(password);
+        try{
+            WebElement signButton = driver.findElement(By.id("signbutton"));
+            signButton.click();
+            System.out.println("autentificate: успешно найдена кнопка прохождения авторизации.");
+        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
+            System.out.println("autentificate: не удалось найти кнопку прохождения авторизации.");
+        }
 
-        WebElement signButton = driver.findElement(By.id("signbutton"));
-        signButton.click();
+        System.out.println("autentificate: Аутентификация прошла успешно.");
     }
 
     /**
@@ -83,7 +106,6 @@ public class SeleniumWork {
      */
     public void checkNewOrder() throws Exception {
 
-        goTo(baseUrl);
         driver.manage().window().maximize();
 
         autentificate();
@@ -97,25 +119,31 @@ public class SeleniumWork {
          */
         while(true) {
 
+            // Обновляем страницу:
+            goTo(baseUrl);
+
             Thread.sleep(3000);
 
-            // Обновляем страничку:
-            refresh();
+            System.out.println("chekNewOrder: начал новый цикл.");
 
             List<WebElement> allElementOrder = findAllOrder();
 
             for (int i = 0; i < allElementOrder.size(); i++) {
                 WebElement nextElement = allElementOrder.get(i);
                 String nextKey = generateOrderInfo(nextElement.getText());
-                WebElement actual = isNewOrder(nextElement, nextKey);
+                WebElement actual = null;
+                actual = isNewOrder(nextElement, nextKey);
+                //|| i == 4
                 if (actual != null) {
-                    /**
-                     * Тут переходим по ссылке в новую вкладку,
-                     * Нажимаем кнопку,
-                     * Делаем скрин(теперь просто в файл сохраняем).
-                     */
+                    actual = nextElement;
+                    nextKey = nextKey;
+
+                    addNewOrder(nextKey);
+
                     updateNew(actual);
-                    addNewOrder(actual, nextKey);
+
+                    goTo(baseUrl);
+                    break;
                 }
             }
         }
@@ -133,40 +161,57 @@ public class SeleniumWork {
 
         goTo(element.getAttribute("href"));
 
+        List<WebElement> targets = null;
+        List<WebElement> targets3 = null;
+        WebElement button = null;
+        WebElement elem = null;
+
         // Нажимаем кнопку показать номер телефона:
-        List<WebElement> targets = driver.findElements(By.tagName("button"));
-        for(int i = 0; i < targets.size(); i++){
-            WebElement button = targets.get(i);
-            if(button.getText().equals("Показать контакты")){
-                System.out.println(targets.get(i).getText());
-                button.click();
+        try {
+            targets = driver.findElements(By.tagName("button"));
+            for (int i = 0; i < targets.size(); i++) {
+                button = targets.get(i);
+                if (button.getText().equals("Показать контакты")) {
+                    //System.out.println(targets.get(i).getText());
+                    button.click();
+                }
             }
+        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
+            System.out.println("Не удалось найти кнопку показать номер телефона: Описание ошибки " + ex.getStackTrace());
         }
 
+        // Пауза перед загрузкой номера на странице:
         Thread.sleep(3000);
-        List<WebElement> targets3 = driver.findElements(By.tagName("span"));
-        for(int i = 0; i < targets3.size(); i++){
-            WebElement elem = targets3.get(i);
-            System.out.println(elem.getText());
-            if(elem.getText().contains("+7")){
-                phoneNumber = elem.getText();
+        try{
+            targets3 = driver.findElements(By.tagName("span"));
+            for(int i = 0; i < targets3.size(); i++){
+                elem = targets3.get(i);
+                //System.out.println(elem.getText());
+                if(elem.getText().contains("+7")){
+                    phoneNumber = elem.getText();
+                }
             }
+            System.out.println("UpdateNew: Номер телефона = " + phoneNumber);
+        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
+            System.out.println("UpdateNew: не удалось найти элемент номер телефона на странице, описание ошибки: " + ex.getStackTrace());
         }
-        System.out.println("Номер телефона = " + phoneNumber);
 
-        saveAsPage(element, phoneNumber);
-
-        goTo(baseUrl);
+        saveAsPage(phoneNumber);
     }
 
     /**
      * Метод сохраняет страничку для браузера полностью.
-     * @param element
      * @throws IOException
      */
-    public void saveAsPage(WebElement element, String phoneNumber) throws IOException {
+    public void saveAsPage(String phoneNumber) throws IOException, InterruptedException {
 
-        String stored_report = driver.getPageSource();
+        Thread.sleep(100);
+        String stored_report = "";
+        try{
+            stored_report = driver.getPageSource();
+        }catch (org.openqa.selenium.StaleElementReferenceException ex) {
+            System.out.println("saveAsPage: не удалось получить тело html страницы, описание ошибки: " + ex);
+        }
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd HH_mm_ss");
         LocalDateTime now = LocalDateTime.now();
@@ -177,7 +222,7 @@ public class SeleniumWork {
         File f = new File(fullPath);
         FileWriter writer = new FileWriter(f,true);
         writer.write(stored_report);
-        System.out.println("Report Created is in Location : " + f.getAbsolutePath());
+        System.out.println("saveAsPage: Report Created is in Location : " + f.getAbsolutePath());
         writer.close();
     }
 
@@ -186,11 +231,15 @@ public class SeleniumWork {
      * @return
      */
     public List<WebElement> findAllOrder(){
-        // Тут у обьекта driver(я так понимаю в нем вся страничка)
-        // запрашиваем определенные элементы надо в хроме глянуть что ищем: например у всех ссылок одинаковый класс class=... class="css-1dyr1oa erw2ohd2"
-        List<WebElement> element = driver.findElements(By.className(findClassName));
-
-        //System.out.println("Число найденых элементов: " + element.size());
+        System.out.println("findAllOrder: выполнение поиска всех обновлений.");
+        List<WebElement> element = null;
+        goTo(baseUrl);
+        try{
+            element = driver.findElements(By.className(findClassName));
+            System.out.println("findAllOrder: Число найденых элементов: " + element.size());
+        }catch (org.openqa.selenium.StaleElementReferenceException ex){
+            System.out.println("Не удалось найти элемент обьявления. Описание ошибки: " + ex);
+        }
         return element;
     }
 
@@ -214,6 +263,8 @@ public class SeleniumWork {
 
         result = splited[0] + splited[1];
 
+        System.out.println("generateOrderInfo: генерация ключа изинформации выполнена, result = " + result + ".");
+
         return result;
     }
 
@@ -223,7 +274,7 @@ public class SeleniumWork {
      * @return
      */
     public WebElement isNewOrder(WebElement element, String key){
-        WebElement result = null;
+        System.out.println("isNewOrder: Проверка новвое ли обьявление: key = " + key + ", !allOrder.containsKey(key) = " + !allOrder.containsKey(key) + ".");
         return !allOrder.containsKey(key) ? element : null;
     }
 
@@ -231,6 +282,7 @@ public class SeleniumWork {
      * Метод обновляет страницу:
      */
     public void refresh(){
+        System.out.println("refresh: обновление страницы.");
         driver.navigate().refresh();
     }
 
@@ -240,6 +292,7 @@ public class SeleniumWork {
      */
     public void goTo(String url){
         driver.get(url);
+        System.out.println("goTo: Переход на указанный url выполнен.");
     }
 
     /**
@@ -251,13 +304,14 @@ public class SeleniumWork {
 
     /**
      * Добавляем обьявление в обработанные:
-     * @param element
      */
-    public void addNewOrder(WebElement element, String key){
-        Order order = new Order(element.getText());
+    public void addNewOrder(String key){
+        Order order = new Order(key);
         if(!allOrder.containsKey(key)){
+            System.out.println("addNewOrder: Добавление нового обьявления в HashMap. key = " + key);
             allOrder.put(key,order);
         }
+        System.out.println("addNewOrder: allOrder.toString = " + allOrder.toString());
     }
 
     /**
