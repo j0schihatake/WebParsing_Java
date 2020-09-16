@@ -31,6 +31,9 @@ public class Main {
         SeleniumWork.isPlaySound = false;
         SeleniumWork.fullPathToSound = "D:\\Develop\\Java\\Projects\\WebParser_Java\\src\\main\\resources\\Warbeat.wav";
 
+        // Число успешных срабатываний просмотра номера на одну учетку:
+        SeleniumWork.accountSucessPhoneCount = 20;
+
         SeleniumWork work = new SeleniumWork();
         work.checkNewOrder();
 

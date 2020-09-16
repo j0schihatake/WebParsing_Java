@@ -36,6 +36,8 @@ public class SeleniumWork {
 
     public static boolean isDebug = false;
 
+    public static int accountSucessPhoneCount = 0;
+
     public static String login = "";
 
     public static String password = "";
@@ -70,6 +72,8 @@ public class SeleniumWork {
      * Метод выполняет проверку не появились ли новые обьявления:
      */
     public void checkNewOrder() throws Exception {
+
+        int counter = 0;
 
         driver.manage().window().maximize();
 
@@ -109,9 +113,16 @@ public class SeleniumWork {
                     if(!phoneNumber.equals("")) {
                         addNewOrder(nextKey);
                         saveAsPage(phoneNumber);
+                        counter += 1;
                         if(isPlaySound)
                             playSound();
                     }else{
+                        changeAccount();
+                    }
+
+                    // Смена аккаунта по достижению accountSucessPhoneCount числа успешных просмотров номера.
+                    if(counter == accountSucessPhoneCount){
+                        counter = 0;
                         changeAccount();
                     }
                     goTo(baseUrl);
